@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Islamische Rede Geschichten</title>
+    
+    <!-- Tailwind CSS for layout utility --><script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP for cinematic animations --><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Google Fonts: Cinzel (Title) and Crimson Text (Body) --><link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS VARIABLES FOR ATMOSPHERE AND SIZE --- */
+        :root {
+            --gold: #D4AF37;
+            --gold-shine: #F2D06B;
+            --dark-bg: #0f0c08;
+            --book-width: 300px; /* Base size for desktop */
+            --book-height: 450px;
+            --book-depth: 40px;
+            
+            /* DARK MODE READING COLORS */
+            --reader-bg: #1A1A1A; /* Dark background for reading */
+            --reader-text: #E0E0E0; /* Light text */
+            --drop-cap-color: #F2D06B; /* Brighter gold for drop cap */
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--dark-bg);
+            font-family: 'Crimson Text', serif;
+            -webkit-tap-highlight-color: transparent; /* Removes blue tap box on mobile */
+        }
+
+        /* --- 1. IMMERSIVE BACKGROUND (Scene) --- */
+        .scene-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .bg-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* HINTERGRUNDBILD-URL EINGEFÜGT */
+            background-image: url('background.png'); 
+            background-position: center;
+            background-size: cover;
+            transform-origin: center center;
+            /* Ensure smooth transitions for filter effects */
+            transition: filter 1.5s ease, transform 0.5s ease; 
+        }
+
+        /* Cinematic Overlays */
+        .overlay-gradient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.5) 100%);
+            pointer-events: none;
+        }
+
+        .golden-hour-filter {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, rgba(255, 166, 0, 0.1), rgba(105, 60, 0, 0.2));
+            mix-blend-mode: overlay;
+            pointer-events: none;
+        }
+
+        /* Dust Particles Canvas */
+        #dust-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.8;
+            mix-blend-mode: screen; /* Makes black background of canvas transparent */
+        }
+
+        /* --- 2. INTERACTIVE HOTSPOT --- */
+        .book-hotspot {
+            position: absolute;
+            /* Final calculated position for the book on the right side of the desk */
+            top: 54%;       
+            left: 65%;      
+            transform: translate(-50%, -50%) rotate(-3deg); 
+            width: 18vw;    
+            height: 46vh;   
+            z-index: 10;
+            cursor: pointer;
+            border-radius: 4px;
+            /* ENTFERNT: transition: box-shadow 0.5s ease; */
+            background: transparent; 
+        }
+
+        /* ENTFERNT: Subtle Glow effect on hover */
+        /* .book-hotspot:hover {
+            box-shadow: 0 0 30px 5px rgba(212, 175, 55, 0.4);
+        } */
+
+        /* --- 3. 3D ANIMATED BOOK --- */
+        .book-3d-wrapper {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: var(--book-width);
+            height: var(--book-height);
+            /* Initial transform: off-screen and rotated for smooth intro */
+            transform: translate(-50%, -50%) scale(0);
+            z-index: 50;
+            perspective: 1500px;
+            pointer-events: none;
+            display: none;
+        }
+
+        .book-structure {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transform-origin: left center;
+        }
+
+        .book-face {
+            position: absolute;
+            backface-visibility: hidden;
+            border-radius: 4px;
+        }
+
+        /* Front Cover */
+        .front {
+            width: 100%;
+            height: 100%;
+            background: #1a0f0f; /* Dark background color if image fails to load */
+            transform: translateZ(calc(var(--book-depth) / 2));
+            padding: 0;
+            box-shadow: inset 0 0 20px #000;
+            border: 2px solid #2a1f1f;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ensures the image fills the cover area */
+            border-radius: 4px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        /* --- 4. READER INTERFACE (DARK MODE) --- */
+        #reader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--reader-bg); /* Dark background */
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Adjusted the texture/shadow for dark mode */
+        #reader-overlay::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            /* Repeating linear gradient with transparent light lines */
+            background: repeating-linear-gradient(
+                180deg,
+                rgba(255, 255, 255, 0.02), /* Very subtle white line */
+                rgba(255, 255, 255, 0.02) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+        }
+
+        .reader-content {
+            max-width: 800px;
+            padding: 80px 40px;
+            color: var(--reader-text); /* Light text color */
+            line-height: 1.8;
+            font-size: 1.2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            width: 100%;
+        }
+
+        .reader-header {
+            text-align: center;
+            margin-bottom: 60px;
+            border-bottom: 1px solid rgba(255,255,255,0.1); /* Light border */
+            padding-bottom: 40px;
+        }
+
+        .reader-header h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            color: var(--gold-shine); /* Gold title */
+            margin-bottom: 10px;
+        }
+        
+        .reader-content h2, .reader-content h3 {
+            color: var(--gold);
+        }
+
+        .bismillah {
+            font-family: sans-serif; 
+            font-size: 2rem;
+            text-align: center;
+            margin: 40px 0;
+            color: var(--gold-shine); /* Gold bismillah */
+        }
+
+        .drop-cap {
+            float: left;
+            font-family: 'Cinzel', serif;
+            font-size: 4.5rem;
+            line-height: 0.8;
+            margin-right: 10px;
+            color: var(--drop-cap-color); /* Bright gold drop cap */
+        }
+        
+        .chapter-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+            border-top: 1px solid rgba(255,255,255,0.1); /* Light border */
+            padding-top: 20px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            color: #999; /* Lighter gray navigation text */
+            cursor: pointer;
+        }
+
+        /* Home Button Style (Already dark, kept consistent) */
+        #close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 101;
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--gold-shine);
+            padding: 10px 20px;
+            border-radius: 9999px;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            transition: background 0.3s, transform 0.1s;
+        }
+
+        #close-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.05);
+        }
+
+        /* --- 5. RESPONSIVE ADJUSTMENTS (MOBILE) --- */
+        @media (max-width: 768px) {
+            :root {
+                --book-width: 220px; 
+                --book-height: 330px;
+            }
+
+            /* Shift background focus right on mobile for better visibility */
+            .bg-image {
+                background-position: 70% center;
+            }
+
+            /* Mobile Hotspot: Adjusted for better tap target */
+            .book-hotspot {
+                top: 50%;
+                left: 50%;
+                width: 40vw;
+                height: 35vh;
+                transform: translate(-50%, -50%) rotate(0deg); 
+            }
+
+            /* Reader Typography for Mobile */
+            .reader-content {
+                padding: 60px 20px; 
+                font-size: 1.1rem;
+            }
+            
+            .reader-header h1 {
+                font-size: 2rem;
+            }
+
+            .drop-cap {
+                font-size: 3.5rem;
+            }
+            
+            .cover-title {
+                font-size: 1.5rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Audio Element (Hidden) --><!-- Place your ambient audio file (e.g., rain.mp3) here if you have one --><audio id="ambient-sound" loop>
+        <!-- Replace the src with your actual audio file path --><source src="" type="audio/mp3"> 
+    </audio>
+
+    <!-- 1. Background Scene Container --><div class="scene-container" id="scene">
+        <div class="bg-image" id="bg-img"></div>
+        <div class="overlay-gradient"></div>
+        <div class="golden-hour-filter"></div>
+        <canvas id="dust-canvas"></canvas>
+        
+        <!-- 2. The Click Trigger (Hotspot) --><div class="book-hotspot" id="hotspot" onclick="openBookSequence()"></div>
+    </div>
+
+    <!-- 3. The Animated 3D Book (Initially Hidden) --><div class="book-3d-wrapper" id="book-wrapper">
+        <div class="book-structure" id="book-model">
+            
+            <!-- Front Cover (JETZT NUR MIT DEINEM BILD) --><div class="book-face front">
+                
+                <!-- BUCHCOVER-BILD-URL EINGEFÜGT --><img src="book_cover.png" 
+                     class="cover-image" 
+                     alt="Buch-Cover: Islamische Rede Geschichten"
+                     onerror="this.style.background='red'"> <!-- Optional: Roter Hintergrund bei Ladefehler des Bildes --></div>
+
+            <!-- Spine --><div class="book-face spine"></div>
+
+            <!-- Back Cover --><div class="book-face back"></div>
+
+            <!-- Simulated Pages --><div class="book-face pages-right"></div>
+            <div class="book-face pages-left"></div>
+        </div>
+    </div>
+
+    <!-- 4. Full Screen Reader --><div id="reader-overlay">
+        
+        <!-- Close Button (Home) --><button id="close-btn" onclick="closeBookSequence()">
+            SCHLIESSEN
+        </button>
+
+        <div class="reader-content">
+            <div class="reader-header">
+                <h1>Islamische Rede Geschichten</h1>
+                <p>Geschichten, die dein Herz berühren</p>
+            </div>
+            
+            <div class="bismillah">
+                بسم الله الرحمن الرحيم
+            </div>
+
+            <h2>Einleitung: Die Stille des Abends</h2>
+            <p>
+                <span class="drop-cap">A</span>m Ende eines langen Tages, wenn die Laterne warmes Licht auf den Holzschreibtisch wirft und der Duft von Kaffee in der Luft liegt, beginnt die Zeit des Nachdenkens. Dies ist ein Platzhalter für den eigentlichen Buchinhalt. Wenn du deine eigenen Geschichten oder Texte hast, kannst du den Inhalt hier direkt ersetzen.
+            </p>
+            <p>
+                Jede Geschichte in diesem Band wurde sorgfältig ausgewählt, um nicht nur das Auge, sondern auch die Seele zu erreichen. Es sind Erzählungen über Geduld (*Sabr*), Dankbarkeit (*Shukr*) und die unergründliche Barmherzigkeit, die alle Dinge umgibt.
+            </p>
+            <p>
+                Wir laden Sie ein, die Hektik des Alltags hinter sich zu lassen. Tauchen Sie ein in diese Worte und lassen Sie sie Ihr Herz in dieser besonderen, stillen Stunde berühren. Möge jede Zeile eine Quelle des Friedens sein.
+            </p>
+            
+            <h3>Kapitel 1: Der Wert eines Augenblicks</h3>
+            <p>
+                Die erste Geschichte beginnt mit einem alten Reisenden, der am Rande einer Wüste Halt machte. Er besaß nicht viel, aber seine Gelassenheit war reicher als jede Karawane. Die Lektion, die er seinem jungen Begleiter erteilte, war einfach: Das Leben ist nicht die Summe der Jahre, sondern die Summe der Momente, in denen wir wirklich präsent sind.
+            </p>
+            
+            <div class="chapter-nav">
+                <span>&larr; Inhaltsverzeichnis</span>
+                <span>Nächstes Kapitel &rarr;</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- PARTICLES (ATMOSPHERE) ---
+        const canvas = document.getElementById('dust-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+        const numParticles = 100;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                // Slower, more subtle movement for dust
+                this.vx = (Math.random() - 0.5) * 0.1; 
+                this.vy = (Math.random() - 0.5) * 0.1;
+                this.size = Math.random() * 1.5 + 0.3; // Very small
+                this.alpha = Math.random() * 0.4 + 0.1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                // Randomly add a slight vertical drift upwards to simulate rising heat/air
+                this.y -= 0.05; 
+                if (this.x < 0 || this.x > width || this.y < 0) this.reset(); // Reset if off screen
+            }
+            draw() {
+                ctx.fillStyle = `rgba(255, 215, 0, ${this.alpha})`; 
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            resize();
+            for(let i=0; i<numParticles; i++) particles.push(new Particle());
+            animateParticles();
+        }
+
+        function animateParticles() {
+            // Use a dark overlay for a smooth, trailing effect
+            ctx.fillStyle = 'rgba(15, 12, 8, 0.05)'; 
+            ctx.fillRect(0, 0, width, height); 
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resize);
+        initParticles();
+
+
+        // --- ANIMATION SEQUENCE FUNCTIONS ---
+        const audio = document.getElementById('ambient-sound');
+        const audioSourceProvided = audio.querySelector('source') && audio.querySelector('source').getAttribute('src');
+
+        function openBookSequence() {
+            // If audio source is present, handle playback
+            if(audioSourceProvided) {
+                audio.volume = 0;
+                audio.play().catch(e => console.log("Audio autoplay blocked, requires user interaction."));
+                gsap.to(audio, {volume: 0.5, duration: 2}); // Fade in audio
+            }
+
+            // Disable hotspot
+            document.getElementById('hotspot').style.pointerEvents = 'none';
+
+            // Elements
+            const scene = document.getElementById('scene');
+            const bgImg = document.getElementById('bg-img');
+            const bookWrapper = document.getElementById('book-wrapper');
+            const bookModel = document.getElementById('book-model');
+            const reader = document.getElementById('reader-overlay');
+            const readerContent = document.querySelector('.reader-content');
+            
+            // Initial position based on hotspot position (adjusting for wrapper centering)
+            const hotspotRect = document.getElementById('hotspot').getBoundingClientRect();
+            const initialX = hotspotRect.left + hotspotRect.width / 2 - window.innerWidth / 2;
+            const initialY = hotspotRect.top + hotspotRect.height / 2 - window.innerHeight / 2;
+
+            // Prepare 3D book
+            bookWrapper.style.display = 'block';
+            
+            // GSAP Timeline for opening the book
+            const tl = gsap.timeline({
+                defaults: { ease: "power2.inOut" }
+            });
+            
+            // Reset book position to match initial hotspot location relative to center
+            tl.set(bookWrapper, {
+                x: initialX,
+                y: initialY,
+                rotationX: 0,
+                rotationY: 0, // Zurücksetzen der Y-Rotation
+                rotationZ: -3, // Match the initial slight rotation on the desk
+                scale: 0.8, // Start slightly smaller
+                opacity: 0,
+            }, "start");
+
+
+            // STEP 1: Cinematic Focus (Zoom & Blur)
+            // Match duration to the book spin (4.0s) for smoother transition
+            tl.to(bgImg, {
+                scale: 1.15,
+                duration: 4.0 
+            }, "start");
+
+            tl.to(scene, {
+                filter: "blur(5px)", 
+                duration: 4.0 
+            }, "start+=0.5");
+
+            // STEP 2: Langsames, sanftes Schweben und 3D-Drehen (Elegantes Spin)
+            // Ends at start+=4.8
+            tl.to(bookWrapper, {
+                scale: 1,
+                opacity: 1,
+                x: 0, // Move to center
+                y: 0,
+                rotationX: 5, // Nur leichter Neigungswinkel
+                rotationY: 360, // Eine volle, elegante Umdrehung um die Y-Achse
+                rotationZ: 0, // Kein unnötiges Rollen
+                duration: 4.0, // Langsamer und sanfter, wie gewünscht
+                ease: "power1.inOut" // Sehr sanfte Beschleunigung und Verlangsamung
+            }, "start+=0.8");
+            
+            // STEP 3: Seamless Reader Transition (Start at the end of the slow spin)
+            tl.to(reader, {
+                opacity: 1,
+                duration: 1.5,
+                onStart: () => { 
+                    reader.style.pointerEvents = "auto"; 
+                    // Hide cover image so it doesn't overlap reader content
+                    document.querySelector('.cover-image').style.opacity = '0';
+                }
+            }, "start+=4.5"); // Startet kurz bevor die Drehung endet, um den Übergang zu glätten
+
+            // Hide 3D model, reveal text content
+            tl.to(bookWrapper, {
+                opacity: 0,
+                scale: 1.05,
+                duration: 1
+            }, "start+=4.5"); // Concurrent with reader fade-in
+
+            tl.set(bookWrapper, { display: 'none' }, "start+=5.5");
+
+            tl.to(readerContent, {
+                opacity: 1,
+                y: 0,
+                duration: 1.5,
+                ease: "power2.out"
+            }, "start+=5.5"); 
+        }
+
+        function closeBookSequence() {
+            // Disable button during animation
+            document.getElementById('close-btn').style.pointerEvents = 'none';
+            const hotspot = document.getElementById('hotspot');
+
+            // Elements
+            const scene = document.getElementById('scene');
+            const bgImg = document.getElementById('bg-img');
+            const reader = document.getElementById('reader-overlay');
+            const readerContent = document.querySelector('.reader-content');
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    hotspot.style.pointerEvents = 'auto'; // Re-enable click
+                    document.getElementById('close-btn').style.pointerEvents = 'auto';
+                    // Restore cover opacity for next open sequence
+                    document.querySelector('.cover-image').style.opacity = '1';
+                }
+            });
+
+            // STEP 1: Fade out Reader Content and Audio
+            tl.to(readerContent, {
+                opacity: 0,
+                y: 20,
+                duration: 0.5
+            }, "start");
+
+            if(audioSourceProvided) {
+                gsap.to(audio, {volume: 0, duration: 1, onComplete: () => audio.pause()});
+            }
+
+            // STEP 2: Fade out Reader Background and reverse effects
+            tl.to(reader, {
+                opacity: 0,
+                duration: 1,
+                onComplete: () => { reader.style.pointerEvents = "none"; }
+            }, "start+=0.5");
+
+            // STEP 3: Restore Background
+            tl.to(scene, {
+                filter: "none",
+                duration: 2,
+                ease: "power2.inOut"
+            }, "start+=1.0");
+
+            tl.to(bgImg, {
+                scale: 1,
+                duration: 2.5,
+                ease: "power2.inOut"
+            }, "start+=1.0");
+        }
+    </script>
+</body>
+</html>
