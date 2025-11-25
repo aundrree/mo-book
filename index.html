@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Islamische Rede Geschichten</title>
     
-    <!-- Tailwind CSS for layout utility --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind CSS for layout utility -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- GSAP for cinematic animations --><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- GSAP for cinematic animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-    <!-- Google Fonts: Cinzel (Title) and Crimson Text (Body) --><link rel="preconnect" href="https://fonts.googleapis.com">
+    <!-- Google Fonts: Cinzel (Title) and Crimson Text (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
@@ -53,11 +56,16 @@
         .bg-image {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            /* REMOVED object-fit: cover; using background properties instead */
+            
             /* HINTERGRUNDBILD-URL EINGEFÜGT */
             background-image: url('background.png'); 
+            
+            /* DESKTOP DEFAULT: Full screen fit */
             background-position: center;
-            background-size: cover;
+            background-size: cover; 
+            background-repeat: no-repeat;
+            
             transform-origin: center center;
             /* Ensure smooth transitions for filter effects */
             transition: filter 1.5s ease, transform 0.5s ease; 
@@ -286,18 +294,27 @@
                 --book-height: 330px;
             }
 
-            /* Shift background focus right on mobile for better visibility */
+            /* --- KEY CHANGE: BLACK BARS ON MOBILE --- */
             .bg-image {
-                background-position: 70% center;
+                /* Show full image on mobile (Contain) */
+                background-size: contain; 
+                background-position: center; 
+                background-repeat: no-repeat;
             }
 
-            /* Mobile Hotspot: Adjusted for better tap target */
+            /* Mobile Hotspot: Adjusted for CONTAINED image */
             .book-hotspot {
-                top: 50%;
-                left: 50%;
-                width: 40vw;
-                height: 35vh;
-                transform: translate(-50%, -50%) rotate(0deg); 
+                /* Vertical center of viewport matches vertical center of contained image */
+                top: 50%; 
+                
+                /* Keep horizontal position same as desktop relative to image width */
+                left: 65%; 
+                
+                /* Size must be smaller because the image is much smaller on screen */
+                width: 25vw; 
+                height: 20vh;
+                
+                transform: translate(-50%, -50%) rotate(-3deg); 
             }
 
             /* Reader Typography for Mobile */
@@ -323,41 +340,55 @@
 </head>
 <body>
 
-    <!-- Audio Element (Hidden) --><!-- Place your ambient audio file (e.g., rain.mp3) here if you have one --><audio id="ambient-sound" loop>
-        <!-- Replace the src with your actual audio file path --><source src="" type="audio/mp3"> 
+    <!-- Audio Element (Hidden) -->
+    <!-- Place your ambient audio file (e.g., rain.mp3) here if you have one -->
+    <audio id="ambient-sound" loop>
+        <!-- Replace the src with your actual audio file path -->
+        <source src="" type="audio/mp3"> 
     </audio>
 
-    <!-- 1. Background Scene Container --><div class="scene-container" id="scene">
+    <!-- 1. Background Scene Container -->
+    <div class="scene-container" id="scene">
         <div class="bg-image" id="bg-img"></div>
         <div class="overlay-gradient"></div>
         <div class="golden-hour-filter"></div>
         <canvas id="dust-canvas"></canvas>
         
-        <!-- 2. The Click Trigger (Hotspot) --><div class="book-hotspot" id="hotspot" onclick="openBookSequence()"></div>
+        <!-- 2. The Click Trigger (Hotspot) -->
+        <div class="book-hotspot" id="hotspot" onclick="openBookSequence()"></div>
     </div>
 
-    <!-- 3. The Animated 3D Book (Initially Hidden) --><div class="book-3d-wrapper" id="book-wrapper">
+    <!-- 3. The Animated 3D Book (Initially Hidden) -->
+    <div class="book-3d-wrapper" id="book-wrapper">
         <div class="book-structure" id="book-model">
             
-            <!-- Front Cover (JETZT NUR MIT DEINEM BILD) --><div class="book-face front">
+            <!-- Front Cover (JETZT NUR MIT DEINEM BILD) -->
+            <div class="book-face front">
                 
-                <!-- BUCHCOVER-BILD-URL EINGEFÜGT --><img src="book_cover.png" 
+                <!-- BUCHCOVER-BILD-URL EINGEFÜGT -->
+                <img src="book_cover.png" 
                      class="cover-image" 
                      alt="Buch-Cover: Islamische Rede Geschichten"
-                     onerror="this.style.background='red'"> <!-- Optional: Roter Hintergrund bei Ladefehler des Bildes --></div>
+                     onerror="this.style.background='red'"> <!-- Optional: Roter Hintergrund bei Ladefehler des Bildes -->
+            </div>
 
-            <!-- Spine --><div class="book-face spine"></div>
+            <!-- Spine -->
+            <div class="book-face spine"></div>
 
-            <!-- Back Cover --><div class="book-face back"></div>
+            <!-- Back Cover -->
+            <div class="book-face back"></div>
 
-            <!-- Simulated Pages --><div class="book-face pages-right"></div>
+            <!-- Simulated Pages -->
+            <div class="book-face pages-right"></div>
             <div class="book-face pages-left"></div>
         </div>
     </div>
 
-    <!-- 4. Full Screen Reader --><div id="reader-overlay">
+    <!-- 4. Full Screen Reader -->
+    <div id="reader-overlay">
         
-        <!-- Close Button (Home) --><button id="close-btn" onclick="closeBookSequence()">
+        <!-- Close Button (Home) -->
+        <button id="close-btn" onclick="closeBookSequence()">
             SCHLIESSEN
         </button>
 
